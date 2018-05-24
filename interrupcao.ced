@@ -1,0 +1,259 @@
+
+
+;
+;******************************************************************************
+;
+;	ESQUELETO de CRONOMETRO base para desenvolvimento do trabalho do CESAR
+;
+;	Versão: 2018.1.1
+;
+;	Áreas de memória
+;	APP	0000 – 7FFF	Área para colocar o PROGRAMA PRINCIPAL (PP). Aqui devem ser colocadas as rotinas, variáveis e a pilha do programa principal.
+;	AVR	8000 – 80FF	Área para colocar as VARIÁVEIS DE COMUNICAÇÃO entre o programa principal e os tratadores de interrupção.
+;	ARI	8100 – 83FF	Área para colocar a rotina de inicialização de variáveis das interrupções. Essa rotina deve iniciar no endereço H8100. Essa rotina deve ser chamada no programa principal, ANTES DE HABILITAR AS INTERRUPÇÕES.
+;	ATI	8400 – FF7F	Área para colocar os TRATADORES DE INTERRUPÇÃO de tempo e de teclado. Aqui devem ser colocadas as rotinas e variáveis usadas pelos tratadores de interrupção.
+;	APR	FF80 – FFFF	Área reservada para os endereços dos periféricos.
+;
+;******************************************************************************
+
+
+;------------------------------------------------------------------------------
+; Endereços das várias áreas do boot e do PP
+;------------------------------------------------------------------------------
+_APP:		equ	h0000
+_ROTINAS:	equ	h0080
+
+_INICIO:	equ	h0100		; início do programa de aplicação
+
+_AVR:		equ	h8000
+
+_ARI:		equ	h8100
+
+_ATI:		equ	h8400
+
+_APR:		equ	hFF80
+_IOAREA16:	equ	hFF80		; area de perifericos, acessada na base 16 bits
+_IOAREA08:	equ	hFFC0		; area de perifericos, acessada na base 8 bits
+
+
+;
+;------------------------------------------------------------------------------
+;	Área reservada para os periféricos
+;------------------------------------------------------------------------------
+
+; Acesso em 16 bits
+	org	_IOAREA16
+	daw	[31]
+IVET:	dw	0		; Vetor de interrupção
+
+; Acesso em 8 bits
+	org	_IOAREA08
+	dab	[23]
+TIMDT:	db	0		; Registro de programação do timer
+INTS:	db	0		; INTERRUPT STATUS: IP x x x . x x IPStec IPStim
+INTE:	db	0		; INTERRUPT ENABLE: IE x x x . x x IEStec IEStim
+TECST:	db	0		; Status do teclado
+TECDT:	db	0		; Dado do teclado
+VISOR:	dab	[36]		; Portas de acesso ao visor
+
+
+;
+;------------------------------------------------------------------------------
+;	Boot Startup
+;	NÃO ALTERAR ESSA ÁREA
+;------------------------------------------------------------------------------
+	org	_APP
+	jmp	_reset		; vetor de reset
+	dw	2018		; versão = 2018.1.1
+	db	1
+	db	1
+
+	
+;------------------------------------------------------------------------------
+;	Rotinas usadas para ler/escrever no relógio
+;	r5 -> indica a função
+;		==0 -> SET TIME
+;		==1 -> GET TIME
+;		outros -> ignora
+;------------------------------------------------------------------------------
+	org	_ROTINAS
+	cmp	r5,#0
+	beq	_set_time
+	cmp	r5,#1
+	beq	_get_time
+	rts	r7
+	
+;------------------------------------------------------------------------------
+; SET_TIME
+;Funcao	Altera as variáveis HORA, MINUTO e SEGUNDO
+;Entra	r0 -> HORA
+;	r1 -> MINUTO
+;	r2 -> SEGUNDO
+;------------------------------------------------------------------------------
+_set_time:
+	and     #H7F,INTE ; inibe interrupções enquanto estiver alterando a hora do dia
+	mov	r0,HORA
+	mov	r1,MINUTO
+	mov	r2,SEGUNDO
+	or      #H80,INTE ; habilita interrupções
+	rts	r7
+	
+;------------------------------------------------------------------------------
+; GET_TIME
+;Funcao	Lê as variáveis HORA, MINUTO e SEGUNDO
+;Ret	r0 -> HORA
+;	r1 -> MINUTO
+;	r2 -> SEGUNDO
+;------------------------------------------------------------------------------
+_get_time:
+	and     #H7F,INTE ; inibe interrupções enquanto estiver alterando a hora do dia
+	mov	HORA,r0
+	mov	MINUTO,r1
+	mov	SEGUNDO,r2
+	or      #H80,INTE ; habilita interrupções
+	rts	r7
+	
+
+;
+;------------------------------------------------------------------------------
+;	Programa de Aplicação
+;------------------------------------------------------------------------------
+	org	_INICIO
+	
+;<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+;	Colocar o programa de aplicação aqui
+;	Esse trecho de código será desenvolvido na segunda parte do trabalho
+;>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+	hlt
+	
+;		
+;------------------------------------------------------------------------------
+;	Código de RESET do processador/interrupção
+;------------------------------------------------------------------------------
+	org	_ARI
+_reset:
+
+	MILISEC: DW 10	;MILISEC nao eh uma variavel compartilhada pois somente a interrupcao ira acessa-la
+	
+	clr INTE
+	mov #65408, R6	;Inicia a stack
+	mov #_ISR, IVET	;Inicia o vetor de interrupcao
+	clr INTS
+	
+	clr HORA	;Reseta as variaveis
+	clr MINUTO
+	clr SEGUNDO
+	mov #-1, TECLA
+	clr TECST
+
+	or #100, TIMDT ;;colocado desse jeito pois o cesar esta mandando em 16 bits
+
+;Limpa o visor
+	mov #VISOR,r0
+CD_Loop:
+	mov #' ',(r0)
+	inc r0
+	bne CD_Loop
+		
+	or #H83, INTE	;Libera as interrupcoes
+
+	jmp _INICIO 
+	
+	
+;
+;------------------------------------------------------------------------------
+;	Variáveis de comunicação entre o programa principal e a rotina de atendimento de interrupções
+;------------------------------------------------------------------------------
+	org	_AVR
+HORA:	DW	0
+MINUTO:	DW	0
+SEGUNDO:DW	0	
+TECLA:	DW	0
+
+	
+	
+;
+;==============================================================================
+;	Handle de Interrupção
+;==============================================================================
+	org	_ATI
+
+_ISR:
+	
+	mov r0, -(r6); Salva o registrador r0 na pilha - r0 eh usado para a variavel HORA
+	mov r1, -(r6); Salva o registrador r0 na pilha - r1 eh usado para a variavel MINUTO
+	mov r2, -(r6); Salva o registrador r0 na pilha - r2 eh usado para a variavel SEGUNDO
+	mov r3, -(r6); Salva o registrador r0 na pilha - r3 eh usado para a variavel MILISEC
+	mov r4, -(r6); Salva o registrador r0 na pilha - r4 eh usado para testar de onde veio a interrupcao
+	mov r5, -(r6)
+	
+	mov INTS,r4 		; Verifica se é INT do TIMER
+	and #1,r4
+	beq test_TEC 		; Se for igual a 0 (ou seja, nao for interrupcao do timer, confere se eh do teclado)		;
+	jsr r7,ISRtim		; Tratamento da INT do TIMER
+	and #hFFFE,INTS		; Desliga bit de INT TIMER
+
+
+test_TEC:
+	mov INTS,r4		;Verifica se é INT do TEC
+	and #2,r4
+	beq FIM_int
+	jsr r7,ISRtec		; Tratamento da INT do TEC
+	and #hFFFD,INTS		; Desliga bit de INT TEC
+	
+FIM_int:
+
+	mov (r6)+, r5
+	mov (r6)+, r4	; Retorna os registradores de antes da interrupcao (GARANTIR QUE O R6 ESTEJA APONTANDO PARA O R0 NA PILHA QUANDO CHEGAR NESSA PARTE)
+	mov (r6)+, r3
+	mov (r6)+, r2	
+	mov (r6)+, r1	
+	mov (r6)+, r0
+    	
+	rti
+
+
+ISRtim:
+	dec MILISEC	;Decrementa a variavel MILISEC e, sempre que ela for igual a 0 reseta o seu valor para 10 e incrementa a variavel de segunds
+	bne Final_Tim
+	
+	mov #10, MILISEC
+	jsr r7, _get_time
+	inc r2
+	
+	cmp #60, r2
+	bne Salva_vars	;Se r2 (Segundos) for menor do que 60 faz um branch para o final do handler de interrupcao do timer
+
+	inc r1
+	clr r2
+	cmp #60, r1		;faz 60-r1
+	bne Salva_vars		;faz um branch caso o r1 (variavel minutos) tenha valor diferente de 60
+
+	inc r0
+	clr r1
+
+Salva_vars:
+	jsr r7, _set_time	;Salva os registradores nas variaveis de acesso compartilhado
+	
+	
+Final_Tim:
+	rts r7			;Termina o tratamento de interrupcao do timer
+
+ISRtec:
+	cmp #h80, TECST		;faz h80 - TECST, se der 0 quer dizer que tem uma tecla
+	beq temTecla
+	rts r7			;Se nao tem tecla pressionada retorna para TEST_TEC
+	
+temTecla:
+	tst TECLA
+	bmi LeTeclado		;Testa se tem um valor negativo em tecla, se tiver ela atualiza o valor de TECLA, se nao tiver ela pula para o final da subrotina
+	jmp Final_Tec
+
+LeTeclado:
+	mov TECDT, TECLA	;Copia a tecla salva no teclado para a variavel tecla
+
+Final_Tec:
+	clr TECST
+	rts r7			;volta para TEST_TEC
+	
