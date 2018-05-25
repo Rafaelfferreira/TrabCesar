@@ -40,3 +40,7 @@ RESETA                   1252                 4E4
 TESTANUMERO              1262                 4EE
 FIMTECLA                 1296                 510
 INPUTCERTO               1306                 51A
+COUNT                    1312                 520
+JUNTADIGITOS             1355                 54B
+MULT_5                   1375                 55F
+SOMALSB                  1387                 56B

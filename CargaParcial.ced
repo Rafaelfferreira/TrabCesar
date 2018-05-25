@@ -337,8 +337,51 @@ FimTecla:
 	mov #-1, TECLA	;;Coloca -1 na tecla??
 	jmp Loop	;;Volta pro loop de input
 
-	;*****AQUI EH ONDE O VALOR DE TECLA SERA RESETADO PARA UM NUMERO NEGATIVO PARA FAZER COM QUE A INTERRUPCAO FUNCIONE CORRETAMENTE
-	 ;*****DEPOIS FAZER UM JMP PRO LOOP
+
+;---------------------------------------************************-----------------------------------------------------------------------
+;				Fim do Setup do Cronometro e começo da contagem
+;---------------------------------------************************-----------------------------------------------------------------------
 
 InputCerto:
-	;*****COMECAR ISSO LIMPANDO A TECLA TBM, ASSIM COMO NO FIM TECLA
+	mov #-1, TECLA	;Limpando a tecla ************************************** PRECISA MESMO?
+	count:	dw 4	;;contador para multiplicar por 5 (usado para juntar e separar os digitos)
+	
+
+	;Colocando os digitos de hora em r3 e r4 para uni-los, o que sera retornado em r5
+	mov VISOR+29, r3
+	mov VISOR+30, r4
+	jsr r7, JuntaDigitos	;Chama a funcao que une os digitos e os coloca em r5
+	mov r5, r0		;Passa a hora de r5 para r0
+	;Juntando os digitos dos minutos
+	mov VISOR+31, r3
+	mov VISOR+32, r4
+	jsr r7, JuntaDigitos
+	mov r5, r1
+	mov #0, r3
+	;;Agora que setou os r0,r1,r2 para hora,minuto,segundo chama a funcao para salvar esses valores 
+	mov #0, r5 ;; Coloca 0 em r5 para chamar a funçao SET_TIME
+	jsr r7, _ROTINAS
+	hlt		;;******************** HLT TEMPORARIO *****************************************
+
+
+
+JuntaDigitos:
+	mov r0, -(r6) ; Salvando o registrador r0 pois o mesmo sera reutilizado
+
+	mov #4, count
+	sub #h30, r3	;;Muda os valores de 3x para apenas x, isto eh, do seu valor asc para o seu valor matematico
+	sub #h30, r4
+	;; A PARTIR DE AQUI COMECAR A TRABALHAR COMO DECIMAL POIS SAO VALORES MATEMATICOS
+	asl r3		;;SHL no MSB
+	mov r3, r0	;;Salva a variavel MSB em r0 para ir somando ela na hora de multiplicar por 5
+Mult_5:
+	add r0, r3	
+	dec count
+	beq SomaLSB	;;Se count = 0 entao ja fez 4 somas
+	jmp Mult_5
+somaLSB:
+	ADD r4, r3
+	mov r3, r5
+
+	mov (r6)+, r0
+	rts r7
