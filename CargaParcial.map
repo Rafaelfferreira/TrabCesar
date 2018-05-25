@@ -45,9 +45,11 @@ COUNTSD                  1570                 622
 NUMSD                    1572                 624
 TEMPSD                   1574                 626
 CRONOMETROTELA           1576                 628
-SEPARADIGITOS            1630                 65E
-LOOPSEPARA               1658                 67A
-SEPAROU                  1680                 690
-JUNTADIGITOS             1697                 6A1
-MULT_5                   1717                 6B5
-SOMALSB                  1729                 6C1
+VAIFIM                   1648                 670
+SEPARADIGITOS            1652                 674
+LOOPSEPARA               1680                 690
+SEPAROU                  1702                 6A6
+JUNTADIGITOS             1719                 6B7
+MULT_5                   1739                 6CB
+SOMALSB                  1751                 6D7
+ENCERRAPROGRAMA          1758                 6DE
