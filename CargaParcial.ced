@@ -361,7 +361,7 @@ InputCerto:
 	;;Agora que setou os r0,r1,r2 para hora,minuto,segundo chama a funcao para salvar esses valores 
 	mov #0, r5 ;; Coloca 0 em r5 para chamar a funçao SET_TIME
 	jsr r7, _ROTINAS
-	hlt		;;******************** HLT TEMPORARIO *****************************************
+	hlt		;;********************* HLT TEMPORARIO *****************************************
 
 
 
