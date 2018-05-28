@@ -442,12 +442,18 @@ CronometroTela:
 	cmp r5, #h007a
 	beq VaiApaga
 
-	cmp r5, #h0049
-	beq VaiInicio
+	cmp r5, #h0049	;;Testa para a funcao de comecar o cronometro
+	beq VaiInicio	;;Vai para o jmp que testa se a flag de cronometro esta desligada e, se estiver, comeca a cronometragem
 	cmp r5, #h0069
 	beq VaiInicio
 
+	cmp r5, #h0046
+	beq VaiParar
+	cmp r5, #h0066
+	beq VaiParar
+
 	;*************** FIM DO TRATADOR DE TECLAS **************************
+FimTratadorTeclas:	
 	mov #-1, TECLA
 	jmp CronometroTela
 
@@ -455,10 +461,17 @@ CronometroTela:
 VaiFim: jmp EncerraPrograma 	;;Vai pra finalizacao do programa
 VaiApaga: jmp ApagaVisor	;;Apaga o I e/ou F do visor
 
-VaiInicio: 	mov #-1, TECLA		;ResetaTecla
-		tst cronometroOn
-		bne CronometroTela	;Se a flag cronometroOn estiver ligada deve ignorar o I e entao volta para o cronometro inicial
-		jmp InicioCronometro
+VaiInicio: 	
+	mov #-1, TECLA		;ResetaTecla
+	tst cronometroOn
+	bne CronometroTela	;Se a flag cronometroOn estiver ligada deve ignorar o I e entao volta para o cronometro inicial
+	jmp InicioCronometro
+
+VaiParar:
+	mov #-1, Tecla		;ResetaTecla
+	tst cronometroOn
+	beq FimTratadorTeclas	;Se a flag estiver desligada a tecla F deve ser ignorara
+	jmp ParaCronometro
 
 
 SeparaDigitos:
@@ -482,7 +495,7 @@ Separou:
 	rts r7
 	
 
-
+	;A funcao tem os parametros de MSB no r3, LSB no r4 e retorna o valor no r5
 JuntaDigitos:
 	mov r0, -(r6) ; Salvando o registrador r0 pois o mesmo sera reutilizado
 
@@ -566,6 +579,7 @@ ApagaVisor:
 	mov #' ', VISOR+34
 	mov #' ', VISOR+35
 	mov #-1, TECLA		;;SEMPRE resetar a tecla depois de usala
+	mov #0, cronometroOn	;;Seta a flag de cronometro para 0, para que a tecla I seja habilitada novamente
 	jmp CronometroTela 	;;Volta para a funcao que mantem o cronometro atualizado
 
 InicioCronometro:
@@ -577,4 +591,19 @@ InicioCronometro:
 	mov #':', VISOR+16
 	mov VISOR+6, VISOR+17
 	mov VISOR+7, VISOR+18
+	mov #1, cronometroOn	;;Seta a flag de cronometro para 1, o que faz com que a tecla I nao funcione novamente
 	jmp CronometroTela
+
+ParaCronometro:
+	;; Coloca os valores do cronometro parado na variavel F
+	mov VISOR, VISOR+22
+	mov VISOR+1, VISOR+23
+	mov #':', VISOR+24
+	mov VISOR+3, VISOR+25
+	mov VISOR+4, VISOR+26
+	mov #':', VISOR+27
+	mov VISOR+6, VISOR+28
+	mov VISOR+7, VISOR+29
+
+	jmp CronometroTela
+	
