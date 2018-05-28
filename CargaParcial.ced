@@ -402,7 +402,7 @@ InputCerto:
 	countSD: 	dw 0
 	numSD: 	dw 0
 	tempSD:	dw 0
-
+	cronometroOn: dw 0
 
 	;;Essa funcao deve - PEGAR AS VARIAVEIS, SEPARA-LAS E COLOCAR NA TELA
 		;	   - TESTAR E CHAMAR SUAS FUNCOES ESPECIFICAS
@@ -436,10 +436,16 @@ CronometroTela:
 	;Tem algo que pode ser util na tecla
 	cmp r5, #h001B	;; Compara a tecla em r5 com a tecla ESCAPE
 	beq VaiFim
-	cmp r5, #h005A
+	
+	cmp r5, #h005A	;; Testa para a funcao de limpar o visor
 	beq VaiApaga	;; Vai para o jmp que chama a funcao de apagar a tecla
 	cmp r5, #h007a
 	beq VaiApaga
+
+	cmp r5, #h0049
+	beq VaiInicio
+	cmp r5, #h0069
+	beq VaiInicio
 
 	;*************** FIM DO TRATADOR DE TECLAS **************************
 	mov #-1, TECLA
@@ -448,6 +454,11 @@ CronometroTela:
 
 VaiFim: jmp EncerraPrograma 	;;Vai pra finalizacao do programa
 VaiApaga: jmp ApagaVisor	;;Apaga o I e/ou F do visor
+
+VaiInicio: 	mov #-1, TECLA		;ResetaTecla
+		tst cronometroOn
+		bne CronometroTela	;Se a flag cronometroOn estiver ligada deve ignorar o I e entao volta para o cronometro inicial
+		jmp InicioCronometro
 
 
 SeparaDigitos:
@@ -554,4 +565,16 @@ ApagaVisor:
 	mov #' ', VISOR+33
 	mov #' ', VISOR+34
 	mov #' ', VISOR+35
+	mov #-1, TECLA		;;SEMPRE resetar a tecla depois de usala
 	jmp CronometroTela 	;;Volta para a funcao que mantem o cronometro atualizado
+
+InicioCronometro:
+	mov VISOR, VISOR+11
+	mov VISOR+1, VISOR+12
+	mov #':', VISOR+13
+	mov VISOR+3, VISOR+14
+	mov VISOR+4, VISOR+15
+	mov #':', VISOR+16
+	mov VISOR+6, VISOR+17
+	mov VISOR+7, VISOR+18
+	jmp CronometroTela
