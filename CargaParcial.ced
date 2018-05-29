@@ -495,6 +495,7 @@ Separou:
 	rts r7
 	
 
+;-----------------------------------------------------------------------------------------------------------------------
 	;A funcao tem os parametros de MSB no r3, LSB no r4 e retorna o valor no r5
 JuntaDigitos:
 	mov r0, -(r6) ; Salvando o registrador r0 pois o mesmo sera reutilizado
@@ -516,6 +517,7 @@ somaLSB:
 
 	mov (r6)+, r0
 	rts r7
+;------------------------------------------------------------------------------------------------------------------------
 
 EncerraPrograma:
 	mov #'*', VISOR
@@ -604,6 +606,118 @@ ParaCronometro:
 	mov #':', VISOR+27
 	mov VISOR+6, VISOR+28
 	mov VISOR+7, VISOR+29
+
+	;Junta os horarios de I
+	mov VISOR+11, r3
+	mov VISOR+12, r4
+	jsr r7, JuntaDigitos	;A Funcao vai pegar os parametros r3 e r4 e retornar em r5
+	mov r5, r1
+
+	;Junta os horarios de F
+	mov VISOR+22, r3
+	mov VISOR+23, r4
+	jsr r7, JuntaDigitos
+	mov r5, r0
+
+	;Calcula a diferenca entre os horarios de I e F
+	sub r1, r0
+
+	jsr r7, PosVariaveis 	;PosVariaveis eh a funcao que multiplica r0 por 60
+	mov r2, r0		;Coloca r2 em r0 para usar a funcao de multiplica novamente
+	jsr r7, PosVariaveis	;Apos isso ja estara em r2 o resultado
+	mov r2, somador	
+
+;------------
+
+	;Junta os minutos de I
+	mov VISOR+14, r3
+	mov VISOR+15, r4
+	jsr r7, JuntaDigitos	;A Funcao vai pegar os parametros r3 e r4 e retornar em r5
+	mov r5, r1
+
+	;Junta os minutos de F
+	mov VISOR+25, r3
+	mov VISOR+26, r4
+	jsr r7, JuntaDigitos
+	mov r5, r0	
+
+	;Calcula a diferenca entre os minutos de I e F
+	sub r1, r0
+
+	jsr r7, PosVariaveis 	;PosVariaveis eh a funcao que multiplica r0 por 60
+	add r2, somador
+
+;------------
+
+	;Junta os segundos de I
+	mov VISOR+17, r3
+	mov VISOR+18, r4
+	jsr r7, JuntaDigitos	;A Funcao vai pegar os parametros r3 e r4 e retornar em r5
+	mov r5, r1
+
+	;Junta os segundos de F
+	mov VISOR+28, r3
+	mov VISOR+29, r4
+	jsr r7, JuntaDigitos
+	mov r5, r0
+
+	;Calcula a diferenca entre os segundos de I e F
+	sub r1, r0	
+	add r0, somador
+
+	cmp #999, somador
+	bpl processaT
+	mov #'*', VISOR+32	;;Coloca o * no lugar do =
+
+
+;; Funcao que coloca o calculo de segundos no visor
+processaT:
+	mov somador, numFD
+	mov somador, tempFD
+	mov #0, countFD
+LoopFinal:
+	sub #100, tempFD
+	bmi SeparouCentena
+	inc countFD
+	mov tempFD, numFD
+	jmp LoopFinal
+SeparouCentena:
+	add #h30, count
+	mov count, VISOR+33	;Coloca as centenas no lugar correto do visor
+	mov numFD, r3		;Coloca as unidades+dezenas em r3 para reaproveitar a funcao utilizada anteriormente
+	jsr r7, SeparaDigitos
+	mov r4, VISOR+34
+	mov r5, VISOR+35
+
+	jmp CronometroTela
+
+
+;---------------------------------------------------------------------------------------------------	
+	;jmp PosVariaveis
+	
+	countFD: 	dw 0
+	numFD: 	dw 0
+	tempFD:	dw 0
+	multFD: dw 0
+	somador: dw 0
+
+PosVariaveis:
+	mov #14, multFD
+	
+	;Valores decimais a partir de agora
+	asl r0
+	asl r0
+
+	mov r0, r2
+Loop_Mult_15:
+	add r0, r2
+	dec count
+	beq FimLoop15
+	jmp Loop_Mult_15
+FimLoop15:
+	rts r7	
+;---------------------------------------------------------------------------------------------------
+
 
 	jmp CronometroTela
 	

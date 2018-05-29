@@ -61,3 +61,14 @@ ENCERRAPROGRAMA          1832                 728
 APAGAVISOR               2049                 801
 INICIOCRONOMETRO         2191                 88F
 PARACRONOMETRO           2249                 8C9
+PROCESSAT                2427                 97B
+LOOPFINAL                2445                 98D
+SEPAROUCENTENA           2467                 9A3
+COUNTFD                  2499                 9C3
+NUMFD                    2501                 9C5
+TEMPFD                   2503                 9C7
+MULTFD                   2505                 9C9
+SOMADOR                  2507                 9CB
+POSVARIAVEIS             2509                 9CD
+LOOP_MULT_15             2521                 9D9
+FIMLOOP15                2533                 9E5
