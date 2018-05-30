@@ -682,8 +682,8 @@ LoopFinal:
 	mov tempFD, numFD
 	jmp LoopFinal
 SeparouCentena:
-	add #h30, count
-	mov count, VISOR+33	;Coloca as centenas no lugar correto do visor
+	add #h30, countFD
+	mov countFD, VISOR+33	;Coloca as centenas no lugar correto do visor
 	mov numFD, r3		;Coloca as unidades+dezenas em r3 para reaproveitar a funcao utilizada anteriormente
 	jsr r7, SeparaDigitos
 	mov r4, VISOR+34
@@ -702,7 +702,7 @@ SeparouCentena:
 	somador: dw 0
 
 PosVariaveis:
-	mov #14, multFD
+	mov #14, countFD
 	
 	;Valores decimais a partir de agora
 	asl r0
@@ -711,7 +711,7 @@ PosVariaveis:
 	mov r0, r2
 Loop_Mult_15:
 	add r0, r2
-	dec count
+	dec countFD
 	beq FimLoop15
 	jmp Loop_Mult_15
 FimLoop15:
