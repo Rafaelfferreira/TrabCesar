@@ -607,6 +607,8 @@ ParaCronometro:
 	mov VISOR+6, VISOR+28
 	mov VISOR+7, VISOR+29
 
+	mov #0, somador ;;Faz com que o somador comece zerado
+
 	;Junta os horarios de I
 	mov VISOR+11, r3
 	mov VISOR+12, r4
@@ -619,6 +621,10 @@ ParaCronometro:
 	jsr r7, JuntaDigitos
 	mov r5, r0
 
+	cmp r0, r1	;;Faz F-I para avaliar se deve somar ou subtrair os segundos do somador
+	bmi DecHora
+	;Se nao for no bmi cai no IncHora
+	
 	;Calcula a diferenca entre os horarios de I e F
 	sub r1, r0
 
@@ -626,9 +632,19 @@ ParaCronometro:
 	mov r2, r0		;Coloca r2 em r0 para usar a funcao de multiplica novamente
 	jsr r7, PosVariaveis	;Apos isso ja estara em r2 o resultado
 	mov r2, somador	
+	jmp JuntaMinutos
+
+DecHora:
+	sub r0, r1	;;Faz I-R
+	mov r1,r0 
+	jsr r7, PosVariaveis 	;PosVariaveis eh a funcao que multiplica r0 por 60
+	mov r2, r0		;Coloca r2 em r0 para usar a funcao de multiplica novamente
+	jsr r7, PosVariaveis	;Apos isso ja estara em r2 o resultado
+	sub r2, somador
 
 ;------------
 
+JuntaMinutos:
 	;Junta os minutos de I
 	mov VISOR+14, r3
 	mov VISOR+15, r4
@@ -641,14 +657,28 @@ ParaCronometro:
 	jsr r7, JuntaDigitos
 	mov r5, r0	
 
+	
+	cmp r0, r1	;;Faz F-I para avaliar se deve somar ou subtrair os segundos do somador
+	bmi DecMinuto
+	;Se nao for no bmi cai no IncMinuto
+	
 	;Calcula a diferenca entre os minutos de I e F
 	sub r1, r0
 
 	jsr r7, PosVariaveis 	;PosVariaveis eh a funcao que multiplica r0 por 60
 	add r2, somador
+	jmp JuntaSegundos
 
+DecMinuto:
+	sub r0,r1
+	mov r1, r0
+
+	jsr r7, PosVariaveis 	;PosVariaveis eh a funcao que multiplica r0 por 60
+	sub r2, somador
 ;------------
 
+
+JuntaSegundos:
 	;Junta os segundos de I
 	mov VISOR+17, r3
 	mov VISOR+18, r4
@@ -661,13 +691,28 @@ ParaCronometro:
 	jsr r7, JuntaDigitos
 	mov r5, r0
 
+	cmp r0, r1	;;Faz F-I para avaliar se deve somar ou subtrair os segundos do somador
+	bmi DecSegundo
+	;Se nao for no bmi cai no IncSegundo
+	
 	;Calcula a diferenca entre os segundos de I e F
 	sub r1, r0	
 	add r0, somador
+	jmp AvaliaEstouro
 
+
+DecSegundo:
+	sub r0,r1
+	mov r1, r0
+	sub r0, somador
+
+AvaliaEstouro:
+;Avalia se o valor nao vai estourar a representacao
 	cmp #999, somador
 	bpl processaT
 	mov #'*', VISOR+32	;;Coloca o * no lugar do =
+	sub #1000, somador
+	jmp AvaliaEstouro
 
 
 ;; Funcao que coloca o calculo de segundos no visor
